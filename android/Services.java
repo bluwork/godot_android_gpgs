@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -40,9 +41,10 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServicesHelper {
+public class Services {
 
-    private final String LOG_TAG = "ServicesHelper";
+    private final String TAG = "Services";
+    private final String RTM = "RealTimeMultiplayer";
 
     private final int RC_SING_IN = 5001;
     private final int RC_ACHIEVEMENT_UI = 9001;
@@ -85,9 +87,10 @@ public class ServicesHelper {
             //From docs: Called when the client attempts to create a real-time room.
             // Update UI and internal state based on room updates.
             if (code == GamesCallbackStatusCodes.OK && room != null) {
-                Log.d(LOG_TAG, "Room " + room.getRoomId() + " created.");
+                Log.d(RTM, "Room " + room.getRoomId() + " created.");
+                mRoom = room;
             } else {
-                Log.w(LOG_TAG, "Error creating room: " + code);
+                Log.w(RTM, "Error creating room: " + code);
             }
         }
 
@@ -96,20 +99,19 @@ public class ServicesHelper {
             // From docs: Called when the client attempts to join a real-time room.
             // Update UI and internal state based on room updates.
             if (code == GamesCallbackStatusCodes.OK && room != null) {
-                Log.d(LOG_TAG, "Room " + room.getRoomId() + " joined.");
+                Log.d(RTM, "Room " + room.getRoomId() + " joined.");
+                mRoom = room;
             } else {
-                Log.w(LOG_TAG, "Error joining room: " + code);
+                Log.w(RTM, "Error joining room: " + code);
             }
         }
 
         @Override
         public void onLeftRoom(int code, @NonNull String roomId) {
             // From docs: Called when the client attempts to leaves the real-time room.
-            Log.d(LOG_TAG, "Left room" + roomId);
+            Log.d(RTM, "*** onLeftRoom() *** Room id: " + roomId + ".");
             // we have left the room; return to main screen.
-            Log.d(LOG_TAG, "onLeftRoom, code " + code);
-            // we have left the room; return to main screen.
-            Log.d(LOG_TAG, "onLeftRoom, code " + code);
+            Log.d(RTM, "onLeftRoom, code " + code);
             mParticipants = null;
         }
 
@@ -117,9 +119,12 @@ public class ServicesHelper {
         public void onRoomConnected(int code, @Nullable Room room) {
             // From docs: Called when all the participants in a real-time room are fully connected.
             if (code == GamesCallbackStatusCodes.OK && room != null) {
-                Log.d(LOG_TAG, "Room " + room.getRoomId() + " connected.");
+                Log.d(RTM, "*** onRoomConnected() *** Room " + room.getRoomId() + " connected.");
+                for (Participant p : room.getParticipants()) {
+                    Log.d(RTM, "\t\tParticipant: "  + p);
+                }
             } else {
-                Log.w(LOG_TAG, "Error connecting to room: " + code);
+                Log.w(RTM, "Error connecting to room: " + code);
             }
         }
     };
@@ -128,67 +133,139 @@ public class ServicesHelper {
         public void onRoomConnecting(@Nullable Room room) {
             //From docs: Called when one or more participants have joined the room and have started the process of establishing peer connections.
             // Update the UI status since we are in the process of connecting to a specific room.
+            if (room != null ) {
+                Log.d(RTM, "*** onRoomConnecting() *** " + room.getRoomId());
+            } else {
+                Log.d(RTM, "*** onRoomConnecting() *** " + " Room is null");
+            }
+
         }
 
         @Override
         public void onRoomAutoMatching(@Nullable Room room) {
             // From docs: Called when the server has started the process of auto-matching.
             // Update the UI status since we are in the process of matching other players.
+            if (room != null ) {
+                Log.d(RTM, "*** onRoomAutomatching() *** " + room.getRoomId());
+            } else {
+                Log.d(RTM, "*** onRoomAutomatching() *** " + " Room is null");
+            }
         }
 
         @Override
         public void onPeerInvitedToRoom(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peers are invited to a room.
             // Update the UI status since we are in the process of matching other players.
+            if (room != null ) {
+                Log.d(RTM, "*** onPeerInvitedToRoom() *** " + " Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeerInvitedToRoom() *** " + " Room is null");
+            }
         }
 
         @Override
         public void onPeerDeclined(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peers decline the invitation to a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onPeerDeclined() *** " + " Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeerDeclined() *** " + " Room is null");
+            }
         }
 
         @Override
         public void onPeerJoined(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peer participants join a room.
             // Update UI status indicating new players have joined!
+            if (room != null ) {
+                Log.d(RTM, "*** onPeerJoined() *** " + " Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeerJoined() *** " + " Room is null");
+            }
         }
 
         @Override
         public void onPeerLeft(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peer participant leave a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onPeerLeft() *** " + "Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeerLeft() *** " + "Room is null");
+            }
         }
 
         @Override
         public void onConnectedToRoom(@Nullable Room room) {
             // From docs: Called when the client is connected to the connected set in a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onConnectedToRoom() *** " + "Room id: " + room.getRoomId());
+            } else {
+                Log.d(RTM, "*** onConnectedToRoom() *** " + "Room is null");
+            }
         }
 
         @Override
         public void onDisconnectedFromRoom(@Nullable Room room) {
             // From docs: Called when the client is disconnected from the connected set in a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onDisconnectedFromRoom() *** " + "Room id: " + room.getRoomId());
+
+            } else {
+                Log.d(RTM, "*** onDisconnectedFromRoom() *** " + "Room is null");
+            }
         }
 
         @Override
         public void onPeersConnected(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peer participants are connected to a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onPeersConnected() *** " + "Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeersConnected() *** " + "Room is null");
+            }
 
         }
 
         @Override
         public void onPeersDisconnected(@Nullable Room room, @NonNull List<String> participantIds) {
             // From docs: Called when one or more peer participants are disconnected from a room.
+            if (room != null ) {
+                Log.d(RTM, "*** onPeersDisconnected() *** " + "Room id: " + room.getRoomId());
+                for (String p : participantIds) {
+                    Log.d(RTM, "\t\tParticipant : " + p);
+                }
+            } else {
+                Log.d(RTM, "*** onPeersDisconnected() *** " + "Room is null");
+            }
         }
 
         @Override
         public void onP2PConnected(@NonNull String participantId) {
             // From docs: Called when the client is successfully connected to a peer participant.
             // Update status due to new peer to peer connection.
+            Log.d(RTM, "*** onP2PConnected() ***" + " Participant Id: " + participantId);
         }
 
         @Override
         public void onP2PDisconnected(@NonNull String participantId) {
             // From docs: Called when client gets disconnected from a peer participant.
             // Update status due to  peer to peer connection being disconnected.
+            Log.d(RTM, "*** onP2PDisconnected() ***" + " Participant Id: " + participantId);
         }
 
     };
@@ -200,6 +277,7 @@ public class ServicesHelper {
             // mIncomingInvitationId
             // and show the popup on the screen.
             String invitationId = invitation.getInvitationId();
+            Log.d(TAG, "*** onInvitationReceived() *** " + "Inviter: " + invitation.getInviter().getDisplayName());
             propagate("rt_multiplayer", "invitation_received");
         }
 
@@ -209,31 +287,32 @@ public class ServicesHelper {
         }
     };
 
-    public ServicesHelper(Activity activity) {
+    public Services(Activity activity) {
         this.activity = activity;
         this.context = activity.getApplicationContext();
     }
 
     private void onConnected() {
 
-        Log.d(LOG_TAG, "onConnected() called. Setting invitation listener ...");
+        Log.d(TAG, "onConnected() called. Setting invitation listener ...");
 
         getInvitationsClient().registerInvitationCallback(invitationCallback);
         checkForInvitation();
 
-        Log.d(LOG_TAG, "Clients initialized");
+        Log.d(TAG, "Clients initialized");
 
-        propagate("services", "connected");
+        propagate("connected", "yes");
     }
 
     private void onDisconnected() {
-        Log.d(LOG_TAG, "onDisconnected() called.");
+        Log.d(TAG, "onDisconnected() called.");
         achievementsClient = null;
         leaderboardsClient = null;
         playersClient = null;
         realTimeMultiplayerClient = null;
         invitationsClient = null;
         gamesClient = null;
+        propagate("connected", "no");
     }
 
     public void signIn() {
@@ -242,26 +321,25 @@ public class ServicesHelper {
     }
 
     public void signOut() {
-        Log.d(LOG_TAG, "signOut()");
+        Log.d(TAG, "signOut()");
 
         if (!isSignedIn()) {
-            Log.w(LOG_TAG, "signOut() called, but was not signed in!");
+            Log.w(TAG, "signOut() called, but was not signed in!");
             return;
         }
         getSignInClient().signOut().addOnCompleteListener(activity, new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 boolean successful = task.isSuccessful();
-                Log.d(LOG_TAG, "signOut(): " + (successful ? "success" : "failed"));
-
+                Log.d(TAG, "signOut(): " + (successful ? "success" : "failed"));
                 onDisconnected();
             }
         });
 
     }
 
-    public void signInSilently() {
-        Log.d(LOG_TAG, "Silently: Sign in ...");
+    public void silentlyIn() {
+        Log.d(TAG, "Silently sign in");
         getSignInClient().silentSignIn().addOnCompleteListener(activity,
                 new OnCompleteListener<GoogleSignInAccount>() {
                     @Override
@@ -269,11 +347,16 @@ public class ServicesHelper {
                         if (task.isSuccessful()) {
                             onConnected();
                         } else {
-                            Log.d(LOG_TAG, "Silently: Unsuccessful sign in.", task.getException());
+                            Log.d(TAG, "Unsuccessful sign in.", task.getException());
+                            if (isServicesDenied()) {
+                                Log.d(TAG, "Player denied using services.");
+                            } else {
+                                Log.d(TAG, "Start in sign in activity.");
+                                signIn();
+                            }
                         }
                     }
                 });
-
     }
 
     public boolean isSignedIn() {
@@ -282,14 +365,13 @@ public class ServicesHelper {
     }
 
     public void onResume() {
-        Log.d(LOG_TAG, "Starting silent sign in.");
-        signInSilently();
+        silentlyIn();
     }
 
     public void onPause() {
 
         if (isSignedIn()) {
-            Log.d(LOG_TAG, "onPause called. Removing invitation listener.");
+            Log.d(TAG, "onPause called. Removing invitation listener.");
             getInvitationsClient().unregisterInvitationCallback(invitationCallback);
         }
 
@@ -303,20 +385,23 @@ public class ServicesHelper {
 
                 GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(intent);
                 if (result.isSuccess()) {
-                    Log.d(LOG_TAG, "Connected from Sing In Activity");
+                    Log.d(TAG, "Connected from Sing In Activity");
                     onConnected();
                 } else {
                     String message = result.getStatus().getStatusMessage();
                     if (message == null || message.isEmpty()) {
                         message = "Response code: " + responseCode;
                     }
-                    Log.d(LOG_TAG, "Login error: " + message);
+                    if (responseCode == Activity.RESULT_CANCELED) {
+                        rememberServiceDenial();
+                    }
+                    Log.d(TAG, "Login error: " + message);
                 }
                 break;
 
             case RC_SELECT_PLAYERS:
                 if (responseCode != Activity.RESULT_OK) {
-                    Log.w(LOG_TAG, "*** select players UI cancelled, " + responseCode);
+                    Log.w(TAG, "*** select players UI cancelled, " + responseCode);
                     // switchToMainScreen();
                 } else {
                     handleSelectPlayers(intent);
@@ -325,12 +410,12 @@ public class ServicesHelper {
 
             case RC_INVITATION_INBOX:
                 if (responseCode != Activity.RESULT_OK) {
-                    Log.w(LOG_TAG, "*** invitation inbox UI cancelled, " + responseCode);
+                    Log.w(TAG, "*** invitation inbox UI cancelled, " + responseCode);
                     // switchToMainScreen();
                     return;
                 }
 
-                Log.d(LOG_TAG, "Invitation inbox UI succeeded.");
+                Log.d(TAG, "Invitation inbox UI succeeded.");
                 Invitation inv = intent.getExtras().getParcelable(
                         Multiplayer.EXTRA_INVITATION);
 
@@ -355,6 +440,15 @@ public class ServicesHelper {
         }
     }
 
+    private void rememberServiceDenial() {
+        activity.getPreferences(Activity.MODE_PRIVATE)
+                .edit().putBoolean("services_denied", true).apply();
+    }
+
+    private boolean isServicesDenied() {
+        return activity.getPreferences(Activity.MODE_PRIVATE).getBoolean("services_denied", false);
+    }
+
     public void showAchievements() {
         if (isSignedIn()) {
             getAchievementsClient().getAchievementsIntent().addOnSuccessListener(new OnSuccessListener<Intent>() {
@@ -374,7 +468,7 @@ public class ServicesHelper {
         if (isSignedIn()) {
             getAchievementsClient().unlock(achievementId);
         } else {
-            Log.d(LOG_TAG, "Achievements: Client is not connected. Unlock failed.");
+            Log.d(TAG, "Achievements: Client is not connected. Unlock failed.");
         }
 
     }
@@ -384,7 +478,7 @@ public class ServicesHelper {
         if (isSignedIn()) {
             getAchievementsClient().increment(achievementId, incrementStep);
         } else {
-            Log.d(LOG_TAG, "Achievements: Client is not connected. "
+            Log.d(TAG, "Achievements: Client is not connected. "
                     + "Achievement increment failed.");
         }
 
@@ -395,7 +489,7 @@ public class ServicesHelper {
         if (isSignedIn()) {
             getLeaderboardsClient().submitScore(leaderboardId, score);
         } else {
-            Log.d(LOG_TAG, "Leaderboards: Client is not connected. Submit score failed.");
+            Log.d(TAG, "Leaderboards: Client is not connected. Submit score failed.");
         }
 
     }
@@ -405,7 +499,7 @@ public class ServicesHelper {
         if (isSignedIn()) {
             getLeaderboardsClient().getLeaderboardIntent(leaderboardId);
         } else {
-            Log.d(LOG_TAG,
+            Log.d(TAG,
                     "Leaderboards: Client is not connected. Cannot show leaderboard: "
                             + leaderboardId);
             signIn();
@@ -460,6 +554,7 @@ public class ServicesHelper {
 
     public void startQuickGame(final int role) {
 
+        Log.d(RTM, "Starting quick game");
         if (isSignedIn()) {
             final int MIN_OPPONENTS = 1, MAX_OPPONENTS = 1;
             Bundle autoMatchCriteria = RoomConfig.createAutoMatchCriteria(MIN_OPPONENTS, MAX_OPPONENTS, role);
@@ -474,10 +569,9 @@ public class ServicesHelper {
 
             // Save the roomConfig so we can use it if we call leave().
             mJoinedRoomConfig = roomConfig;
-
-            // create room:
-            getRealTimeMultiplayerClient().create(roomConfig);
-
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            getRealTimeMultiplayerClient().create(mJoinedRoomConfig);
+            Log.d(RTM, "Creating room");
             propagate("rt_multiplayer", "creating_room");
         } else {
             signIn();
@@ -514,7 +608,7 @@ public class ServicesHelper {
 
     public void handleSelectPlayers(Intent data) {
 
-        Log.d(LOG_TAG, "Select players UI succeeded.");
+        Log.d(TAG, "Select players UI succeeded.");
 
         // Get the invitee list.
         final ArrayList<String> invitees = data.getStringArrayListExtra(Games.EXTRA_PLAYER_IDS);
@@ -537,13 +631,13 @@ public class ServicesHelper {
         mJoinedRoomConfig = roomBuilder.build();
         getRealTimeMultiplayerClient().create(mJoinedRoomConfig);
 
-        Log.d(LOG_TAG, "Room created, waiting for it to be ready...");
+        Log.d(TAG, "Room created, waiting for it to be ready...");
         propagate("rt_multiplayer", "creating_room");
     }
 
     public void acceptInviteToRoom(String invId) {
 
-        Log.d(LOG_TAG, "Accepting invitation: " + invId);
+        Log.d(TAG, "Accepting invitation: " + invId);
         RoomConfig.Builder builder = RoomConfig.builder(mRoomUpdateCallback)
                 .setInvitationIdToAccept(invId);
         mJoinedRoomConfig = builder.build();
@@ -552,16 +646,20 @@ public class ServicesHelper {
     }
 
     public void leaveRoom() {
-        Log.d(LOG_TAG, "Leaving room.");
-        if (mRoom.getRoomId() != null) {
+        Log.d(TAG, "Leaving room.");
+        if (mRoom != null) {
+            Log.d(TAG, "Leaving room " + mRoom.getRoomId() + ".");
             getRealTimeMultiplayerClient().leave(mJoinedRoomConfig, mRoom.getRoomId());
             mRoom = null;
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         }
         propagate("rt_multiplayer", "leaving_room");
     }
 
     public void startGame() {
 
+        Log.d(TAG, "Starting game...");
         propagate("rt_multiplayer", "start_game");
     }
 
@@ -570,6 +668,7 @@ public class ServicesHelper {
         mMsgBuf[0] = (byte) parentTag;
         mMsgBuf[1] = (byte) targetTag;
         mMsgBuf[2] = (byte) lastValue;
+
 
        /* myScore = myScore + lastValue;
         scores.put(mMyId, myScore);

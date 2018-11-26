@@ -4,17 +4,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
 
-import org.godotengine.godot.GameFacade;
-import org.godotengine.godot.ServicesHelper;
+import org.godotengine.godot.ServicesFacade;
 
-public class GodotPlayGameServices extends Godot.SingletonBase implements ServicesHelper.BackMessageListener {
+public class AndroidGpgsModule extends Godot.SingletonBase implements org.godotengine.godot.Services.BackMessageListener {
 
-    private static final String TAG = "Godot Play Games";
+    private static final String TAG = "Android_Gpgs_Module";
     private int mInstanceId;
-    private GameFacade facade;
+    private ServicesFacade facade;
 
-    public GodotPlayGameServices(Activity pActivity) {
-        registerClass("GodotPlayGameServices", new String[]{
+    public AndroidGpgsModule(Activity activity) {
+        registerClass("AndroidGpgsModule", new String[]{
 
                 "init",
 
@@ -28,21 +27,21 @@ public class GodotPlayGameServices extends Godot.SingletonBase implements Servic
 
                 "hasInvitation",
 
-                "startQuickGame", "invitePlayers", "showInvitations"
+                "startQuickGame", "invitePlayers", "showInvitations", "leaveRoom"
 
         });
 
-        facade = new GameFacade(pActivity, this);
+        facade = new ServicesFacade(activity, this);
     }
 
-    static public Godot.SingletonBase initialize(Activity pActivity) {
-        return new GodotPlayGameServices(pActivity);
+    static public Godot.SingletonBase initialize(Activity activity) {
+        return new AndroidGpgsModule(activity);
     }
 
     public void init(final int pInstanceId) {
 
         mInstanceId = pInstanceId;
-        Log.d("GPGS", "Script instance id: " + mInstanceId);
+        //Log.d(TAG, "Script instance id: " + mInstanceId);
     }
 
     private void signIn() {
@@ -59,7 +58,7 @@ public class GodotPlayGameServices extends Godot.SingletonBase implements Servic
 
     protected void onMainResume() {
         if (facade == null) {
-            Log.d("GPGS", "Facade is not initialized yet");
+            Log.d(TAG, "Facade is not initialized yet");
             return;
         }
         facade.onResume();
@@ -102,6 +101,10 @@ public class GodotPlayGameServices extends Godot.SingletonBase implements Servic
         facade.invitePlayers();
     }
 
+    private void leaveRoom() {
+        facade.leaveRoom();
+    }
+
     private void showInvitations() {
         facade.showInvitations();
     }
@@ -113,6 +116,6 @@ public class GodotPlayGameServices extends Godot.SingletonBase implements Servic
     @Override
     public void propagate(String from, String what) {
         GodotLib.calldeferred(mInstanceId, "_from_services", new Object[]{from, what});
-        Log.d("GPGS", "Back to Godot - instance_id: " + mInstanceId + " from: " + from + ": " + what + ".");
+        Log.d(TAG, "Back to Godot - instance_id: " + mInstanceId + " from: " + from + ": " + what + ".");
     }
 }

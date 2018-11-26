@@ -3,21 +3,19 @@ package org.godotengine.godot;
 import android.app.Activity;
 import android.content.Intent;
 
-import org.godotengine.godot.ServicesHelper;
-
-public class GameFacade {
+public class ServicesFacade {
 
     private Activity activity;
-    private ServicesHelper helper;
+    private Services helper;
 
-    public GameFacade(Activity activity, ServicesHelper.BackMessageListener messageListener) {
+    public ServicesFacade(Activity activity, org.godotengine.godot.Services.BackMessageListener messageListener) {
         this.activity = activity;
-        helper = new ServicesHelper(activity);
+        helper = new org.godotengine.godot.Services(activity);
         helper.setMessageListener(messageListener);
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                helper.signInSilently();
+                helper.silentlyIn();
             }
         });
     }
@@ -155,6 +153,15 @@ public class GameFacade {
             @Override
             public void run() {
                 helper.isConnected();
+            }
+        });
+    }
+
+    public void leaveRoom() {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                helper.leaveRoom();
             }
         });
     }
