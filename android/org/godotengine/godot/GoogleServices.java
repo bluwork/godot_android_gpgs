@@ -39,11 +39,12 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
-public class Services {
+public class GoogleServices {
 
-    private final String TAG = "Services";
+    private final String TAG = "GoogleServices";
     private final String RTM = "RealTimeMultiplayer";
 
     private final int RC_SING_IN = 5001;
@@ -69,7 +70,7 @@ public class Services {
     private String localPlayerId = null;
     private ArrayList<Participant> mParticipants = null;
     private Room mRoom = null;
-    private byte[] mMsgBuf = new byte[3];
+    private byte[] mMessageBuffer;
     private RoomConfig mJoinedRoomConfig;
 
     private BackMessageListener messageListener;
@@ -287,7 +288,7 @@ public class Services {
         }
     };
 
-    public Services(Activity activity) {
+    public GoogleServices(Activity activity) {
         this.activity = activity;
         this.context = activity.getApplicationContext();
     }
@@ -468,7 +469,7 @@ public class Services {
         if (isSignedIn()) {
             getAchievementsClient().unlock(achievementId);
         } else {
-            Log.d(TAG, "Achievements: Client is not connected. Unlock failed.");
+            Log.w(TAG, "Achievements: Client is not connected. Unlock failed.");
         }
 
     }
@@ -478,7 +479,7 @@ public class Services {
         if (isSignedIn()) {
             getAchievementsClient().increment(achievementId, incrementStep);
         } else {
-            Log.d(TAG, "Achievements: Client is not connected. "
+            Log.w(TAG, "Achievements: Client is not connected. "
                     + "Achievement increment failed.");
         }
 
@@ -489,7 +490,7 @@ public class Services {
         if (isSignedIn()) {
             getLeaderboardsClient().submitScore(leaderboardId, score);
         } else {
-            Log.d(TAG, "Leaderboards: Client is not connected. Submit score failed.");
+            Log.w(TAG, "Leaderboards: Client is not connected. Submit score failed.");
         }
 
     }
@@ -499,7 +500,7 @@ public class Services {
         if (isSignedIn()) {
             getLeaderboardsClient().getLeaderboardIntent(leaderboardId);
         } else {
-            Log.d(TAG,
+            Log.w(TAG,
                     "Leaderboards: Client is not connected. Cannot show leaderboard: "
                             + leaderboardId);
             signIn();
@@ -651,6 +652,7 @@ public class Services {
             Log.d(TAG, "Leaving room " + mRoom.getRoomId() + ".");
             getRealTimeMultiplayerClient().leave(mJoinedRoomConfig, mRoom.getRoomId());
             mRoom = null;
+            localPlayerId = null;
             activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         }
@@ -663,30 +665,48 @@ public class Services {
         propagate("rt_multiplayer", "start_game");
     }
 
-    public void broadcastMessage(int parentTag, int targetTag, int lastValue) {
+    private void broadcastUnreliable() {
 
-        mMsgBuf[0] = (byte) parentTag;
-        mMsgBuf[1] = (byte) targetTag;
-        mMsgBuf[2] = (byte) lastValue;
-
-
-       /* myScore = myScore + lastValue;
-        scores.put(mMyId, myScore);
-        // Send to every other participant.
-        for (Participant p : mParticipants) {
-            if (p.getParticipantId().equals(mMyId)) {
-                continue;
-            }
-            if (p.getStatus() != Participant.STATUS_JOINED) {
-                continue;
-
-            }
-            if (mRoom != null) {
-                Games.RealTimeMultiplayer.sendUnreliableMessage(
-                        activity.mHelper.getApiClient(), mMsgBuf, mRoom.getRoomId(),
-                        p.getParticipantId());
-            }*/
     }
+
+    private void broadcastReliable() {
+        if (mMessageBuffer.length > 0) {
+            for (String participantId : mRoom.getParticipantIds()) {
+                if (!participantId.equals(localPlayerId)) {
+                    Task<Integer> task = getRealTimeMultiplayerClient()
+                            .sendReliableMessage(mMessageBuffer,
+                                    mRoom.getRoomId(),
+                                    participantId,
+                                    handleMessageSentCallback)
+                            .addOnCompleteListener(new OnCompleteListener<Integer>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Integer> task) {
+                                    // Keep track of which messages are sent, if desired.
+                                    recordMessageToken(task.getResult());
+                                }
+                            });
+                }
+            }
+        }
+
+    }
+
+    HashSet<Integer> pendingMessageSet = new HashSet<>();
+
+    synchronized void recordMessageToken(int tokenId) {
+        pendingMessageSet.add(tokenId);
+    }
+
+    private RealTimeMultiplayerClient.ReliableMessageSentCallback handleMessageSentCallback =
+            new RealTimeMultiplayerClient.ReliableMessageSentCallback() {
+                @Override
+                public void onRealTimeMessageSent(int statusCode, int tokenId, String recipientId) {
+                    // handle the message being sent.
+                    synchronized (this) {
+                        pendingMessageSet.remove(tokenId);
+                    }
+                }
+            };
 
     private void propagate(String from, String what) {
         messageListener.propagate(from, what);

@@ -4,13 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
 
-import org.godotengine.godot.ServicesFacade;
-
-public class AndroidGpgsModule extends Godot.SingletonBase implements org.godotengine.godot.Services.BackMessageListener {
+public class AndroidGpgsModule extends Godot.SingletonBase implements GoogleServices.BackMessageListener {
 
     private static final String TAG = "Android_Gpgs_Module";
     private int mInstanceId;
-    private ServicesFacade facade;
+    private ServicesBroker broker;
 
     public AndroidGpgsModule(Activity activity) {
         registerClass("AndroidGpgsModule", new String[]{
@@ -31,7 +29,7 @@ public class AndroidGpgsModule extends Godot.SingletonBase implements org.godote
 
         });
 
-        facade = new ServicesFacade(activity, this);
+        broker = new ServicesBroker(activity, this);
     }
 
     static public Godot.SingletonBase initialize(Activity activity) {
@@ -45,72 +43,72 @@ public class AndroidGpgsModule extends Godot.SingletonBase implements org.godote
     }
 
     private void signIn() {
-        facade.signIn();
+        broker.signIn();
     }
 
     private void signOut() {
-        facade.signOut();
+        broker.signOut();
     }
 
     protected void onMainActivityResult(int requestCode, int resultCode, Intent data) {
-        facade.onActivityResult(requestCode, resultCode, data);
+        broker.onActivityResult(requestCode, resultCode, data);
     }
 
     protected void onMainResume() {
-        if (facade == null) {
+        if (broker == null) {
             Log.d(TAG, "Facade is not initialized yet");
             return;
         }
-        facade.onResume();
+        broker.onResume();
     }
 
     protected void onMainPause() {
-        if (facade == null) {
+        if (broker == null) {
             return;
         }
-        facade.onPause();
+        broker.onPause();
     }
 
     private void showAchievements() {
-        facade.showAchievements();
+        broker.showAchievements();
     }
 
     private void unlockAchievement(String achievementId) {
-        facade.unlockAchievement(achievementId);
+        broker.unlockAchievement(achievementId);
     }
 
     private void incrementAchievement(String achievementId, int increment_step) {
-        facade.incrementAchievement(achievementId, increment_step);
+        broker.incrementAchievement(achievementId, increment_step);
     }
 
     private void showLeaderboard(String leaderboardId) {
-        facade.showLeaderboard(leaderboardId);
+        broker.showLeaderboard(leaderboardId);
     }
 
     private void submitScore(String leaderboardId, int score) {
-        facade.submitScore(leaderboardId, score);
+        broker.submitScore(leaderboardId, score);
     }
 
     private void startQuickGame(int role) {
 
-        facade.startQuickGame(role);
+        broker.startQuickGame(role);
     }
 
     private void invitePlayers() {
 
-        facade.invitePlayers();
+        broker.invitePlayers();
     }
 
     private void leaveRoom() {
-        facade.leaveRoom();
+        broker.leaveRoom();
     }
 
     private void showInvitations() {
-        facade.showInvitations();
+        broker.showInvitations();
     }
 
     private void isConnected() {
-        facade.isConnected();
+        broker.isConnected();
     }
 
     @Override

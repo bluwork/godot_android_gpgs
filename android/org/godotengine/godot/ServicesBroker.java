@@ -3,14 +3,14 @@ package org.godotengine.godot;
 import android.app.Activity;
 import android.content.Intent;
 
-public class ServicesFacade {
+public class ServicesBroker {
 
     private Activity activity;
-    private Services helper;
+    private GoogleServices helper;
 
-    public ServicesFacade(Activity activity, org.godotengine.godot.Services.BackMessageListener messageListener) {
+    public ServicesBroker(Activity activity, GoogleServices.BackMessageListener messageListener) {
         this.activity = activity;
-        helper = new org.godotengine.godot.Services(activity);
+        helper = new GoogleServices(activity);
         helper.setMessageListener(messageListener);
         activity.runOnUiThread(new Runnable() {
             @Override
