@@ -14,3 +14,4 @@ def configure(env):
         env.android_add_default_config("applicationId '"+app_id+"'")
         env.android_add_dependency("implementation 'com.google.android.gms:play-services-auth:16.0.1'")
         env.android_add_dependency("implementation 'com.google.android.gms:play-services-games:16.0.0'")
+        env.disable_module()
